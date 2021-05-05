@@ -1,0 +1,81 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterName": {
+            "value": "GEN-UNIQUE"
+        },
+        "clusterSku": {
+            "value": "Standard"
+        },
+        "adminUserName": {
+            "value": "GEN-UNIQUE"
+        },
+        "adminPassword": {
+            "value": "GEN-PASSWORD"
+        },
+        "clientCertificateThumbprint": {
+            "value": "GEN-SF-CERT-THUMBPRINT"
+        },
+        "nodeType1Name": {
+            "value": "NT1"
+        },
+        "nodeType1VmSize": {
+            "value": "Standard_D2_v2"
+        },
+        "nodeType1VmInstanceCount": {
+            "value": 5
+        },
+        "nodeType1DataDiskSizeGB": {
+            "value": 120
+        },
+        "vmImagePublisher": {
+            "value": "MicrosoftWindowsServer"
+        },
+        "vmImageOffer": {
+            "value": "WindowsServer"
+        },
+        "vmImageSku": {
+            "value": "2019-Datacenter"
+        },
+        "vmImageVersion": {
+            "value": "latest"
+        },
+        "applicationTypeName": {
+            "value": "ManagedIdentityTestAppType"
+        },
+        "applicationTypeVersion": {
+            "value": "1.0.0"
+        },
+        "applicationPackageUrl": {
+            "value": "https://testappstorage.blob.core.windows.net/container/ManagedIdentityTestApp.sfpkg?<sas-token>"
+        },
+        "applicationName": {
+            "value":"ManagedIdentityTestApp"
+        },
+        "serviceNameSA": {
+            "value": "ManagedIdentityTestSAService"
+        },
+        "serviceTypeNameSA": {
+            "value": "ManagedIdentityTestSAServiceType"
+        },
+        "serviceNameUA1": {
+            "value": "ManagedIdentityTestUA1Service"
+        },
+        "serviceTypeNameUA1": {
+            "value": "ManagedIdentityTestUA1ServiceType"
+        },
+        "serviceNameUA2": {
+            "value": "ManagedIdentityTestUA2Service"
+        },
+        "serviceTypeNameUA2": {
+            "value": "ManagedIdentityTestUA2ServiceType"
+        },
+        "userAssignedIdentityName1": {
+            "value": "UserAssignedIdentity1"
+        },
+        "userAssignedIdentityName2": {
+            "value": "UserAssignedIdentity2"
+        }
+    }
+}

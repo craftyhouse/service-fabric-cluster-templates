@@ -1,0 +1,355 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterName": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 23,
+            "metadata": {
+                "description": "Name of your cluster - Between 3 and 23 characters. Letters and numbers only"
+            }
+        },
+        "clusterSku": {
+            "type": "string",
+            "allowedValues": [
+                "Basic",
+                "Standard"
+            ],
+            "defaultValue": "Standard"
+        },
+        "adminUserName": {
+            "type": "string",
+            "defaultValue": "vmadmin"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "clientCertificateThumbprint": {
+            "type": "string"
+        },
+        "nodeType1Name": {
+            "type": "string",
+            "maxLength": 9,
+            "defaultValue": "NT1"
+        },
+        "nodeType1VmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2_v2"
+        },
+        "nodeType1VmInstanceCount": {
+            "type": "int",
+            "defaultValue": 5
+        },
+        "nodeType1DataDiskSizeGB": {
+            "type": "int",
+            "defaultValue": 120
+        },
+        "vmImagePublisher": {
+            "type": "string",
+            "defaultValue": "MicrosoftWindowsServer"
+        },
+        "vmImageOffer": {
+            "type": "string",
+            "defaultValue": "WindowsServer"
+        },
+        "vmImageSku": {
+            "type": "string",
+            "defaultValue": "2019-Datacenter"
+        },
+        "vmImageVersion": {
+            "type": "string",
+            "defaultValue": "latest"
+        },
+        "userAssignedIdentityName1": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the first user assigned identity, also used as friendly name in application managed identity definition."
+            }
+        },
+        "userAssignedIdentityName2": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the second user assigned identity, also used as friendly name in application managed identity definition."
+            }
+        },
+        "applicationTypeName": {
+            "type": "string",
+            "metadata": {
+                "description": "The application type name"
+            }
+        },
+        "applicationTypeVersion": {
+            "type": "string",
+            "metadata": {
+                "description": "The application type version"
+            }
+        },
+        "applicationPackageUrl": {
+            "type": "string",
+            "metadata": {
+                "description": "The full URL to the application package sfpkg file"
+            }
+        },
+        "applicationName": {
+            "type": "string",
+            "metadata": {
+                "description": "The application name"
+            }
+        },
+        "serviceNameSA": {
+            "type": "string",
+            "metadata": {
+                "description": "The service name of the service which uses System assigned identity"
+            }
+        },
+        "serviceTypeNameSA": {
+            "type": "string",
+            "metadata": {
+                "description": "The service type name of the service which uses System assigned identity"
+            }
+        },
+        "serviceNameUA1": {
+            "type": "string",
+            "metadata": {
+                "description": "The service name of the service which uses the first User assigned identity"
+            }
+        },
+        "serviceTypeNameUA1": {
+            "type": "string",
+            "metadata": {
+                "description": "The service type name of the service which uses the first User assigned identity"
+            }
+        },
+        "serviceNameUA2": {
+            "type": "string",
+            "metadata": {
+                "description": "The service name of the service which uses the second User assigned identity"
+            }
+        },
+        "serviceTypeNameUA2": {
+            "type": "string",
+            "metadata": {
+                "description": "The service type name of the service which uses the second User assigned identity"
+            }
+        }
+    },
+    "variables": {
+        "sfApiVersion": "2021-01-01-preview",
+        "managedIdentityApiVersion": "2018-11-30",
+        "userAssignedIdentityResourceId1": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('userAssignedIdentityName1'))]",
+        "userAssignedIdentityResourceId2": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('userAssignedIdentityName2'))]",
+        "appVersion": "[concat(resourcegroup().id,'/providers/Microsoft.ServiceFabric/managedClusters/',parameters('clusterName'),'/applicationTypes/', parameters('applicationTypeName'), '/versions/', parameters('applicationTypeVersion'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('sfApiVersion')]",
+            "type": "Microsoft.ServiceFabric/managedclusters",
+            "name": "[parameters('clusterName')]",
+            "location": "[resourcegroup().location]",
+            "sku": {
+                "name": "[parameters('clusterSku')]"
+            },
+            "properties": {
+                "dnsName": "[toLower(parameters('clusterName'))]",
+                "adminUserName": "[parameters('adminUserName')]",
+                "adminPassword": "[parameters('adminPassword')]",
+                "clientConnectionPort": 19000,
+                "httpGatewayConnectionPort": 19080,
+                "clients": [
+                    {
+                        "isAdmin": true,
+                        "thumbprint": "[parameters('clientCertificateThumbprint')]"
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "frontendPort": 8000,
+                        "backendPort": 8000,
+                        "protocol": "tcp",
+                        "probeProtocol": "tcp"
+                    },
+                    {
+                        "frontendPort": 8001,
+                        "backendPort": 8001,
+                        "protocol": "tcp",
+                        "probeProtocol": "tcp"
+                    },
+                    {
+                        "frontendPort": 8002,
+                        "backendPort": 8002,
+                        "protocol": "tcp",
+                        "probeProtocol": "tcp"
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "[variables('sfApiVersion')]",
+            "type": "Microsoft.ServiceFabric/managedclusters/nodetypes",
+            "name": "[concat(parameters('clusterName'), '/', parameters('nodeType1Name'))]",
+            "location": "[resourcegroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.ServiceFabric/managedclusters/', parameters('clusterName'))]"
+            ],
+            "properties": {
+                "isPrimary": true,
+                "vmImagePublisher": "[parameters('vmImagePublisher')]",
+                "vmImageOffer": "[parameters('vmImageOffer')]",
+                "vmImageSku": "[parameters('vmImageSku')]",
+                "vmImageVersion": "[parameters('vmImageVersion')]",
+                "vmSize": "[parameters('nodeType1VmSize')]",
+                "vmInstanceCount": "[parameters('nodeType1VmInstanceCount')]",
+                "dataDiskSizeGB": "[parameters('nodeType1DataDiskSizeGB')]",
+                "applicationPorts": {
+                    "endPort": 30000,
+                    "startPort": 20000
+                },
+                "ephemeralPorts": {
+                    "endPort": 65534,
+                    "startPort": 49152
+                }
+            }
+        },
+        {
+            "apiVersion": "[variables('managedIdentityApiVersion')]",
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "name": "[parameters('userAssignedIdentityName1')]",
+            "location": "[resourcegroup().location]"
+        },
+        {
+            "apiVersion": "[variables('managedIdentityApiVersion')]",
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "name": "[parameters('userAssignedIdentityName2')]",
+            "location": "[resourcegroup().location]"
+        },
+        {
+            "apiVersion": "[variables('sfApiVersion')]",
+            "type": "Microsoft.ServiceFabric/managedclusters/applicationTypes",
+            "name": "[concat(parameters('clusterName'), '/', parameters('applicationTypeName'))]",
+            "location": "[resourcegroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.ServiceFabric/managedclusters/', parameters('clusterName'),'/nodetypes/', parameters('nodeType1Name'))]"
+            ],
+            "properties": {}
+        },
+        {
+            "apiVersion": "[variables('sfApiVersion')]",
+            "type": "Microsoft.ServiceFabric/managedclusters/applicationTypes/versions",
+            "name": "[concat(parameters('clusterName'), '/', parameters('applicationTypeName'), '/', parameters('applicationTypeVersion'))]",
+            "location": "[resourcegroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.ServiceFabric/managedclusters/', parameters('clusterName'), '/applicationTypes/', parameters('applicationTypeName'))]"
+            ],
+            "properties": {
+                "appPackageUrl": "[parameters('applicationPackageUrl')]"
+            }
+        },
+        {
+            "apiVersion": "[variables('sfApiVersion')]",
+            "type": "Microsoft.ServiceFabric/managedclusters/applications",
+            "name": "[concat(parameters('clusterName'), '/', parameters('applicationName'))]",
+            "location": "[resourcegroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.ServiceFabric/managedclusters/', parameters('clusterName'), '/applicationTypes/', parameters('applicationTypeName'), '/versions/', parameters('applicationTypeVersion'))]",
+                "[variables('userAssignedIdentityResourceId1')]",
+                "[variables('userAssignedIdentityResourceId2')]"
+            ],
+            "identity": {
+                "type": "userAssigned, systemAssigned",
+                "userAssignedIdentities": {
+                    "[variables('userAssignedIdentityResourceId1')]": {},
+                    "[variables('userAssignedIdentityResourceId2')]": {}
+                }
+            },
+            "properties": {
+                "version": "[variables('appVersion')]",
+                "parameters": {},
+                "managedIdentities": [
+                    {
+                        "name": "[parameters('userAssignedIdentityName1')]",
+                        "principalId": "[reference(variables('userAssignedIdentityResourceId1'), variables('managedIdentityApiVersion')).principalId]"
+                    },
+                    {
+                        "name": "[parameters('userAssignedIdentityName2')]",
+                        "principalId": "[reference(variables('userAssignedIdentityResourceId2'), variables('managedIdentityApiVersion')).principalId]"
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "[variables('sfApiVersion')]",
+            "type": "Microsoft.ServiceFabric/managedclusters/applications/services",
+            "name": "[concat(parameters('clusterName'), '/', parameters('applicationName'), '/', parameters('serviceNameSA'))]",
+            "location": "[resourcegroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.ServiceFabric/managedclusters/', parameters('clusterName'), '/applications/', parameters('applicationName'))]"
+            ],
+            "properties": {
+                "serviceKind": "Stateless",
+                "serviceTypeName": "[parameters('serviceTypeNameSA')]",
+                "instanceCount": "-1",
+                "partitionDescription": {
+                    "partitionScheme": "Singleton"
+                },
+                "correlationScheme": [],
+                "serviceLoadMetrics": [],
+                "servicePlacementPolicies": []
+            }
+        },
+        {
+            "apiVersion": "[variables('sfApiVersion')]",
+            "type": "Microsoft.ServiceFabric/managedclusters/applications/services",
+            "name": "[concat(parameters('clusterName'), '/', parameters('applicationName'), '/', parameters('serviceNameUA1'))]",
+            "location": "[resourcegroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.ServiceFabric/managedclusters/', parameters('clusterName'), '/applications/', parameters('applicationName'))]"
+            ],
+            "properties": {
+                "serviceKind": "Stateless",
+                "serviceTypeName": "[parameters('serviceTypeNameUA1')]",
+                "instanceCount": "-1",
+                "partitionDescription": {
+                    "partitionScheme": "Singleton"
+                },
+                "correlationScheme": [],
+                "serviceLoadMetrics": [],
+                "servicePlacementPolicies": []
+            }
+        },
+        {
+            "apiVersion": "[variables('sfApiVersion')]",
+            "type": "Microsoft.ServiceFabric/managedclusters/applications/services",
+            "name": "[concat(parameters('clusterName'), '/', parameters('applicationName'), '/', parameters('serviceNameUA2'))]",
+            "location": "[resourcegroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.ServiceFabric/managedclusters/', parameters('clusterName'), '/applications/', parameters('applicationName'))]"
+            ],
+            "properties": {
+                "serviceKind": "Stateless",
+                "serviceTypeName": "[parameters('serviceTypeNameUA2')]",
+                "instanceCount": "-1",
+                "partitionDescription": {
+                    "partitionScheme": "Singleton"
+                },
+                "correlationScheme": [],
+                "serviceLoadMetrics": [],
+                "servicePlacementPolicies": []
+            }
+        }
+    ],
+    "outputs": {
+        "serviceFabricExplorer": {
+            "value": "[concat('https://', reference(parameters('clusterName')).fqdn, ':', reference(parameters('clusterName')).httpGatewayConnectionPort)]",
+            "type": "string"
+        },
+        "clientConnectionEndpoint": {
+            "value": "[concat(reference(parameters('clusterName')).fqdn, ':', reference(parameters('clusterName')).clientConnectionPort)]",
+            "type": "string"
+        },
+        "clusterProperties": {
+            "value": "[reference(parameters('clusterName'))]",
+            "type": "object"
+        }
+    }
+}

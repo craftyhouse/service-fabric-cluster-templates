@@ -1,0 +1,11 @@
+{
+  "$schema": "https://aka.ms/azure-quickstart-templates-metadata-schema#",
+  "type": "QuickStart",
+  "itemDisplayName": "Deploy a managed Service Fabric cluster with App MI",
+  "description": "This template takes a minimum set of parameters and deploys a Standard SKU managed Service Fabric cluster with 1 node type and an application using managed identity.",
+  "summary": "This template takes a minimum set of parameters and deploys a Standard SKU managed Service Fabric cluster with 1 node type and an application using managed identity.",
+  "githubUsername": "lukeslev",
+  "dateUpdated": "2021-04-05"
+}
+
+
